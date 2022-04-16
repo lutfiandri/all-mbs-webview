@@ -69,79 +69,101 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        home: Scaffold(
-      body: SafeArea(
-        child: InAppWebView(
-          key: webViewKey,
-          initialUrlRequest:
-              URLRequest(url: Uri.parse("https://all-mbs.vercel.app")),
-          initialOptions: options,
-          pullToRefreshController: pullToRefreshController,
-          onWebViewCreated: (controller) {
-            webViewController = controller;
-          },
-          onLoadStart: (controller, url) {
-            setState(() {
-              this.url = url.toString();
-              urlController.text = this.url;
-            });
-          },
-          androidOnPermissionRequest: (controller, origin, resources) async {
-            return PermissionRequestResponse(
-                resources: resources,
-                action: PermissionRequestResponseAction.GRANT);
-          },
-          shouldOverrideUrlLoading: (controller, navigationAction) async {
-            var uri = navigationAction.request.url!;
+      debugShowCheckedModeBanner: false,
+      home: Scaffold(
+        body: SafeArea(
+          child: Stack(
+            children: [
+              InAppWebView(
+                key: webViewKey,
+                initialUrlRequest:
+                    URLRequest(url: Uri.parse("https://all-mbs.vercel.app")),
+                initialOptions: options,
+                pullToRefreshController: pullToRefreshController,
+                onWebViewCreated: (controller) {
+                  webViewController = controller;
+                },
+                onLoadStart: (controller, url) {
+                  setState(() {
+                    this.url = url.toString();
+                    urlController.text = this.url;
+                  });
+                },
+                androidOnPermissionRequest:
+                    (controller, origin, resources) async {
+                  return PermissionRequestResponse(
+                      resources: resources,
+                      action: PermissionRequestResponseAction.GRANT);
+                },
+                shouldOverrideUrlLoading: (controller, navigationAction) async {
+                  var uri = navigationAction.request.url!;
 
-            if (![
-              "http",
-              "https",
-              "file",
-              "chrome",
-              "data",
-              "javascript",
-              "about"
-            ].contains(uri.scheme)) {
-              if (await canLaunch(url)) {
-                // Launch the App
-                await launch(
-                  url,
-                );
-                // and cancel the request
-                return NavigationActionPolicy.CANCEL;
-              }
-            }
+                  if (![
+                    "http",
+                    "https",
+                    "file",
+                    "chrome",
+                    "data",
+                    "javascript",
+                    "about"
+                  ].contains(uri.scheme)) {
+                    if (await canLaunch(url)) {
+                      // Launch the App
+                      await launch(
+                        url,
+                      );
+                      // and cancel the request
+                      return NavigationActionPolicy.CANCEL;
+                    }
+                  }
 
-            return NavigationActionPolicy.ALLOW;
-          },
-          onLoadStop: (controller, url) async {
-            pullToRefreshController.endRefreshing();
-            setState(() {
-              this.url = url.toString();
-              urlController.text = this.url;
-            });
-          },
-          onLoadError: (controller, url, code, message) {
-            pullToRefreshController.endRefreshing();
-          },
-          onProgressChanged: (controller, progress) {
-            if (progress == 100) {
-              pullToRefreshController.endRefreshing();
-            }
-            setState(() {
-              this.progress = progress / 100;
-              urlController.text = url;
-            });
-          },
-          onUpdateVisitedHistory: (controller, url, androidIsReload) {
-            setState(() {
-              this.url = url.toString();
-              urlController.text = this.url;
-            });
-          },
+                  return NavigationActionPolicy.ALLOW;
+                },
+                onLoadStop: (controller, url) async {
+                  pullToRefreshController.endRefreshing();
+                  setState(() {
+                    this.url = url.toString();
+                    urlController.text = this.url;
+                  });
+                },
+                onLoadError: (controller, url, code, message) {
+                  pullToRefreshController.endRefreshing();
+                },
+                onProgressChanged: (controller, progress) {
+                  if (progress == 100) {
+                    pullToRefreshController.endRefreshing();
+                  }
+                  setState(() {
+                    this.progress = progress / 100;
+                    urlController.text = url;
+                  });
+                },
+                onUpdateVisitedHistory: (controller, url, androidIsReload) {
+                  setState(() {
+                    this.url = url.toString();
+                    urlController.text = this.url;
+                  });
+                },
+              ),
+              Positioned(
+                top: 4,
+                right: 4,
+                child: ElevatedButton(
+                  child: const Icon(Icons.refresh),
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: Size.zero,
+                    padding: const EdgeInsets.all(8.0),
+                    shape: const CircleBorder(),
+                  ),
+                  onPressed: () {
+                    webViewController?.reload();
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-    ));
+    );
   }
 }
